@@ -15,7 +15,6 @@
 </head>
 <body>
 
-<!-- Pantalla de bloqueo -->
 <section id="lock" class="lock">
   <form id="lockForm" class="lock-card" autocomplete="off">
     <div class="logo">💸</div>
@@ -31,37 +30,59 @@
   </form>
 </section>
 
-<!-- App -->
 <main id="app" hidden>
   <header class="top">
     <h2 id="title">Gastos</h2>
     <button class="icon-btn" id="lockNow" title="Bloquear">🔒</button>
   </header>
 
+  <section id="hero" class="hero">
+    <div class="hero-nav">
+      <button class="nav-btn" id="mPrev" aria-label="Mes anterior">‹</button>
+      <div id="mLabel" class="mlabel"></div>
+      <button class="nav-btn" id="mNext" aria-label="Mes siguiente">›</button>
+    </div>
+    <div id="heroTotal" class="hero-total"></div>
+    <div id="heroSub" class="hero-sub"></div>
+    <div id="heroStack" class="stack"></div>
+    <div id="heroLegend" class="legend"></div>
+  </section>
+
   <section id="tab-list" class="tab">
     <div class="filters">
-      <input type="month" id="fMonth">
+      <input type="search" id="fText" placeholder="🔎  Buscar motivo, comercio o ítem…">
       <select id="fCat"><option value="">Todas las categorías</option></select>
-      <input type="search" id="fText" placeholder="Buscar motivo o comercio…">
     </div>
-    <div class="totals" id="totals"></div>
+    <div id="tagFilter" class="chips scroll"></div>
     <ul id="list" class="list"></ul>
     <p id="empty" class="muted center" hidden>Sin gastos en este filtro.</p>
   </section>
 
   <section id="tab-sum" class="tab" hidden>
-    <div class="filters"><input type="month" id="sMonth"></div>
-    <div class="totals" id="sTotals"></div>
-    <h3>Por categoría</h3>
-    <div id="byCat"></div>
+    <div class="seg" id="seg">
+      <button data-v="cat" class="on">Categorías</button>
+      <button data-v="tag">Etiquetas</button>
+      <button data-v="item">Por ítem</button>
+    </div>
+    <div id="sumBody"></div>
     <h3>Últimos 6 meses</h3>
     <div id="byMonth" class="months"></div>
   </section>
 
   <section id="tab-set" class="tab" hidden>
-    <h3>Categorías</h3>
+    <h3>Categorías de gasto</h3>
     <div id="catList" class="chips"></div>
-    <button class="btn" id="addCat">+ Agregar categoría</button>
+    <button class="btn" data-add="cats">+ Agregar categoría</button>
+
+    <h3>Etiquetas</h3>
+    <p class="muted">Para clasificar el tipo de gasto (fijo, común, ocasión especial…). Puedes poner varias a un gasto.</p>
+    <div id="tagList" class="chips"></div>
+    <button class="btn" data-add="tags">+ Agregar etiqueta</button>
+
+    <h3>Tipos de ítem (detalle de compras)</h3>
+    <p class="muted">Para separar lo que compraste dentro de una boleta, por ejemplo en el súper.</p>
+    <div id="icatList" class="chips"></div>
+    <button class="btn" data-add="icats">+ Agregar tipo de ítem</button>
 
     <h3>Respaldo</h3>
     <p class="muted">Tus datos viven solo en este dispositivo, cifrados con tu clave. Para pasarlos entre celular y computador, exporta un respaldo y restáuralo en el otro.</p>
@@ -72,6 +93,7 @@
     <label class="btn">📥 Importar gastos (JSON)
       <input type="file" id="importJson" accept=".json" hidden>
     </label>
+    <button class="btn" id="expXlsx">📊 Exportar a Excel (con colores y hojas por mes)</button>
     <button class="btn" id="expCsv">📄 Exportar CSV (sin cifrar)</button>
 
     <h3>Seguridad</h3>
@@ -80,17 +102,16 @@
   </section>
 
   <nav class="bar">
-    <button data-tab="list" class="on">🧾<span>Gastos</span></button>
+    <button data-tab="list" class="on"><i>🧾</i><span>Gastos</span></button>
     <button id="fab" class="fab" aria-label="Nuevo gasto">＋</button>
-    <button data-tab="sum">📊<span>Resumen</span></button>
-    <button data-tab="set">⚙️<span>Ajustes</span></button>
+    <button data-tab="sum"><i>📊</i><span>Resumen</span></button>
+    <button data-tab="set"><i>⚙️</i><span>Ajustes</span></button>
   </nav>
 </main>
 
-<!-- Formulario -->
 <dialog id="dlg">
   <form id="form" method="dialog">
-    <h3 id="dlgTitle">Nuevo gasto</h3>
+    <div class="sheet-head"><h3 id="dlgTitle">Nuevo gasto</h3><button type="button" class="icon-btn" id="cancel" aria-label="Cerrar">✕</button></div>
 
     <div class="photo" id="photoBox">
       <img id="photoImg" alt="Boleta" hidden>
@@ -100,16 +121,13 @@
       </div>
     </div>
 
-    <label>Motivo *<input id="fMotivo" required maxlength="120" placeholder="Ej: almuerzo con cliente"></label>
+    <label>Motivo *<input id="fMotivo" required maxlength="120" placeholder="Ej: compras de la semana"></label>
     <label>Comercio<input id="fComercio" maxlength="80" placeholder="Ej: Jumbo"></label>
 
     <div class="row">
       <label>Fecha<input type="date" id="fFecha" required></label>
-      <label>Moneda
-        <select id="fMoneda"><option>CLP</option><option>USD</option></select>
-      </label>
+      <label>Moneda<select id="fMoneda"><option>CLP</option><option>USD</option></select></label>
     </div>
-
     <div class="row">
       <label id="lblMonto">Monto CLP *<input id="fMonto" inputmode="decimal" required placeholder="0"></label>
       <label id="lblClp" hidden>Cobrado en CLP *<input id="fClp" inputmode="numeric" placeholder="Lo que cargó tu tarjeta"></label>
@@ -117,19 +135,24 @@
     <p id="rate" class="muted" hidden></p>
 
     <div class="row">
-      <label>Categoría
-        <select id="fCategoria"></select>
-      </label>
+      <label>Categoría<select id="fCategoria"></select></label>
       <label>Medio de pago
         <select id="fPago"><option>Débito</option><option>Crédito</option><option>Efectivo</option><option>Transferencia</option></select>
       </label>
     </div>
 
+    <div class="field-title">Etiquetas</div>
+    <div id="fTags" class="chips"></div>
+
+    <div class="field-title">Detalle de la compra <span class="muted">(opcional)</span></div>
+    <div id="itemsBox"></div>
+    <button type="button" class="btn" id="addItem">＋ Agregar ítem</button>
+    <p id="itemsSum" class="muted"></p>
+
     <label>Notas<textarea id="fNotas" rows="2" maxlength="300"></textarea></label>
 
     <div class="actions">
       <button type="button" class="btn danger" id="delBtn" hidden>Eliminar</button>
-      <button type="button" class="btn" id="cancel">Cancelar</button>
       <button class="btn primary" id="saveBtn" value="save">Guardar</button>
     </div>
   </form>
