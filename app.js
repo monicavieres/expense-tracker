@@ -256,6 +256,31 @@ $('#restoreFirst').addEventListener('change', async ev => {
   const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
   try { await restoreFrom(f); loadCats(); setupLockScreen(); $('#lockErr').textContent = 'Respaldo cargado. Ingresa su clave.'; } catch (e) { $('#lockErr').textContent = 'No se pudo restaurar: ' + e.message; }
 });
+
+/* Importar gastos desde JSON: {gastos:[{fecha,motivo,comercio,categoria,pago,moneda,monto,clp,notas,ref,foto(base64 jpeg)}]} */
+$('#importJson').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()), items = Array.isArray(d) ? d : d.gastos;
+    if (!Array.isArray(items)) throw new Error('Formato no válido');
+    const known = new Set(expenses.map(e => e.ref).filter(Boolean));
+    let n = 0, dup = 0;
+    for (const it of items) {
+      if (it.ref && known.has(it.ref)) { dup++; continue; }
+      const monto = Number(it.monto), moneda = it.moneda === 'USD' ? 'USD' : 'CLP', clpVal = Math.round(Number(it.clp ?? it.monto));
+      if (!/^\d{4}-\d\d-\d\d$/.test(it.fecha) || !it.motivo || !(monto > 0) || !(clpVal > 0)) throw new Error('Gasto inválido: ' + (it.motivo || '(sin motivo)'));
+      const id = crypto.randomUUID();
+      const e = {motivo: String(it.motivo), comercio: it.comercio || '', fecha: it.fecha, moneda, monto, clp: clpVal,
+        categoria: it.categoria || cats[cats.length - 1], pago: it.pago || 'Débito', notas: it.notas || '', foto: !!it.foto, creado: Date.now() + n};
+      if (it.ref) e.ref = String(it.ref);
+      await dbPut('exp', {id, ...(await encJSON(e))});
+      if (it.foto) await dbPut('photo', {id, ...(await encrypt(new Uint8Array(unb64(it.foto))))});
+      n++;
+    }
+    await loadExpenses(); render();
+    alert(`Importados: ${n}` + (dup ? ` · ya existían: ${dup}` : ''));
+  } catch (e) { alert('No se pudo importar: ' + e.message); }
+});
 $('#expCsv').onclick = () => {
   if (!confirm('El CSV NO está cifrado. Guárdalo en un lugar seguro. ¿Exportar?')) return;
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
