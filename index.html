@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gastos">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <title>Mis gastos</title>
+</head>
+<body>
+
+<!-- Pantalla de bloqueo -->
+<section id="lock" class="lock">
+  <form id="lockForm" class="lock-card" autocomplete="off">
+    <div class="logo">💸</div>
+    <h1>Mis gastos</h1>
+    <p id="lockMsg" class="muted"></p>
+    <input id="pw" type="password" placeholder="Clave" autocomplete="current-password" required minlength="4">
+    <input id="pw2" type="password" placeholder="Repite la clave" autocomplete="new-password" hidden>
+    <button class="btn primary" id="lockBtn">Entrar</button>
+    <p id="lockErr" class="err"></p>
+    <label id="restoreWrap" class="link" hidden>¿Tienes un respaldo? Restaurar
+      <input type="file" id="restoreFirst" accept=".json" hidden>
+    </label>
+  </form>
+</section>
+
+<!-- App -->
+<main id="app" hidden>
+  <header class="top">
+    <h2 id="title">Gastos</h2>
+    <button class="icon-btn" id="lockNow" title="Bloquear">🔒</button>
+  </header>
+
+  <section id="tab-list" class="tab">
+    <div class="filters">
+      <input type="month" id="fMonth">
+      <select id="fCat"><option value="">Todas las categorías</option></select>
+      <input type="search" id="fText" placeholder="Buscar motivo o comercio…">
+    </div>
+    <div class="totals" id="totals"></div>
+    <ul id="list" class="list"></ul>
+    <p id="empty" class="muted center" hidden>Sin gastos en este filtro.</p>
+  </section>
+
+  <section id="tab-sum" class="tab" hidden>
+    <div class="filters"><input type="month" id="sMonth"></div>
+    <div class="totals" id="sTotals"></div>
+    <h3>Por categoría</h3>
+    <div id="byCat"></div>
+    <h3>Últimos 6 meses</h3>
+    <div id="byMonth" class="months"></div>
+  </section>
+
+  <section id="tab-set" class="tab" hidden>
+    <h3>Categorías</h3>
+    <div id="catList" class="chips"></div>
+    <button class="btn" id="addCat">+ Agregar categoría</button>
+
+    <h3>Respaldo</h3>
+    <p class="muted">Tus datos viven solo en este dispositivo, cifrados con tu clave. Para pasarlos entre celular y computador, exporta un respaldo y restáuralo en el otro.</p>
+    <button class="btn" id="expBackup">⬇️ Exportar respaldo (cifrado)</button>
+    <label class="btn">⬆️ Restaurar respaldo
+      <input type="file" id="restore" accept=".json" hidden>
+    </label>
+    <button class="btn" id="expCsv">📄 Exportar CSV (sin cifrar)</button>
+
+    <h3>Seguridad</h3>
+    <button class="btn" id="chgPw">Cambiar clave</button>
+    <button class="btn danger" id="wipe">Borrar todos los datos</button>
+  </section>
+
+  <nav class="bar">
+    <button data-tab="list" class="on">🧾<span>Gastos</span></button>
+    <button id="fab" class="fab" aria-label="Nuevo gasto">＋</button>
+    <button data-tab="sum">📊<span>Resumen</span></button>
+    <button data-tab="set">⚙️<span>Ajustes</span></button>
+  </nav>
+</main>
+
+<!-- Formulario -->
+<dialog id="dlg">
+  <form id="form" method="dialog">
+    <h3 id="dlgTitle">Nuevo gasto</h3>
+
+    <div class="photo" id="photoBox">
+      <img id="photoImg" alt="Boleta" hidden>
+      <div class="photo-btns">
+        <label class="btn">📷 Foto / boleta<input type="file" id="photoIn" accept="image/*" hidden></label>
+        <button type="button" class="btn" id="photoDel" hidden>Quitar</button>
+      </div>
+    </div>
+
+    <label>Motivo *<input id="fMotivo" required maxlength="120" placeholder="Ej: almuerzo con cliente"></label>
+    <label>Comercio<input id="fComercio" maxlength="80" placeholder="Ej: Jumbo"></label>
+
+    <div class="row">
+      <label>Fecha<input type="date" id="fFecha" required></label>
+      <label>Moneda
+        <select id="fMoneda"><option>CLP</option><option>USD</option></select>
+      </label>
+    </div>
+
+    <div class="row">
+      <label id="lblMonto">Monto CLP *<input id="fMonto" inputmode="decimal" required placeholder="0"></label>
+      <label id="lblClp" hidden>Cobrado en CLP *<input id="fClp" inputmode="numeric" placeholder="Lo que cargó tu tarjeta"></label>
+    </div>
+    <p id="rate" class="muted" hidden></p>
+
+    <div class="row">
+      <label>Categoría
+        <select id="fCategoria"></select>
+      </label>
+      <label>Medio de pago
+        <select id="fPago"><option>Débito</option><option>Crédito</option><option>Efectivo</option><option>Transferencia</option></select>
+      </label>
+    </div>
+
+    <label>Notas<textarea id="fNotas" rows="2" maxlength="300"></textarea></label>
+
+    <div class="actions">
+      <button type="button" class="btn danger" id="delBtn" hidden>Eliminar</button>
+      <button type="button" class="btn" id="cancel">Cancelar</button>
+      <button class="btn primary" id="saveBtn" value="save">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="viewer"><img id="viewerImg" alt="Boleta"><button class="btn" id="viewerClose">Cerrar</button></dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
