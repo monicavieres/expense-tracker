@@ -339,6 +339,7 @@ $('#importJson').addEventListener('change', async ev => {
       if (!/^\d{4}-\d\d-\d\d$/.test(it.fecha) || !it.motivo || !(monto > 0) || !(clpVal > 0)) throw new Error('Gasto inválido: ' + (it.motivo || '(sin motivo)'));
       const items = (it.items || []).map(i => ({n: String(i.n), m: Number(i.m), c: i.c || lists.icats[lists.icats.length - 1]}));
       const tags = (it.tags || []).map(String);
+      if (it.categoria && !lists.cats.includes(it.categoria)) { lists.cats.push(it.categoria); saveList('cats'); }
       for (const t of tags) if (!lists.tags.includes(t)) { lists.tags.push(t); saveList('tags'); }
       for (const i of items) if (!lists.icats.includes(i.c)) { lists.icats.push(i.c); saveList('icats'); }
       const prev = it.ref && known.get(it.ref), id = prev?.id || crypto.randomUUID();
